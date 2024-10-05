@@ -10,7 +10,8 @@ import java.sql.Timestamp;
 import java.util.Scanner;
 
 /**
- * Hello world!
+ * Hotel Booking Project
+ * Author : Manish Kumar Sahu
  *
  */
 public class App 
@@ -127,43 +128,54 @@ public class App
     }
     
     //Method to book a room
-    private static void bookARoom(Connection con,Scanner scanner){
-    	//columns : id, room_no, name, phone, booking_time
-    	String sql = "INSERT INTO booking_table(name, room_no, phone) VALUES(?,?,?)";
-    	
-    	try {
-			PreparedStatement preparedStatement = con.prepareStatement(sql);
-			
-			System.out.println("ENTER NAME : ");
-			String name = scanner.next();
-			System.out.println("ENTER ROOM NO : ");
-			int roomNo = scanner.nextInt();
-			System.out.println("ENTER PHONE NO : ");
-			String phoneNo = scanner.next();
-			
-			if(name != null || name != "" || !name.equals("") || phoneNo != null || phoneNo != "" || phoneNo != "0" || roomNo != 0) {
-				preparedStatement.setString(1,name);
-				preparedStatement.setInt(2, roomNo);
-				preparedStatement.setString(3, phoneNo);
-				
-				int rowsAffected = preparedStatement.executeUpdate();
-				
-				if(rowsAffected > 0) {
-					System.out.println("Booked Successfully...");
-				}
-				else {
-					System.out.println("Failed to book...please try again.");
-				}
-			}
-			else {
-				System.out.println("Please Enter Details : ");
-			}
-			
-			preparedStatement.close();
-		} catch (SQLException e) {
-			System.out.println("Failed to book a room : " + e.getMessage());
-		}
-    	
+    private static void bookARoom(Connection con, Scanner scanner) {
+        // columns : id, room_no, name, phone, booking_time
+        String sql = "INSERT INTO booking_table(name, room_no, phone) VALUES(?,?,?)";
+
+        try {
+            PreparedStatement preparedStatement = con.prepareStatement(sql);
+
+            System.out.println("ENTER NAME: ");
+            String name = scanner.next();
+            System.out.println("ENTER ROOM NO: ");
+            int roomNo = scanner.nextInt();
+
+            // Check if the room is available
+            if (roomAvailable(con, roomNo)) {
+                System.out.println("Booking already exists for room no: " + roomNo);
+                return;  // Exit the method if room is not available
+            }
+
+            System.out.println("ENTER PHONE NO: ");
+            String phoneNo = scanner.next();
+            // Loop until a valid 10-digit phone number is entered
+            while (phoneNo.length() != 10 || !phoneNo.chars().allMatch(Character::isDigit)) {
+                System.out.println("Invalid phone number. Please enter a 10-digit phone number: ");
+                phoneNo = scanner.nextLine();  // Accept input again
+            }
+
+
+            // Validate the inputs properly
+            if (name != null && !name.isEmpty() && phoneNo != null && !phoneNo.isEmpty() && roomNo != 0) {
+                preparedStatement.setString(1, name);
+                preparedStatement.setInt(2, roomNo);
+                preparedStatement.setString(3, phoneNo);
+
+                int rowsAffected = preparedStatement.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    System.out.println("Booked Successfully...");
+                } else {
+                    System.out.println("Failed to book...please try again.");
+                }
+            } else {
+                System.out.println("Please enter valid details.");
+            }
+
+            preparedStatement.close();
+        } catch (SQLException e) {
+            System.out.println("Failed to book a room: " + e.getMessage());
+        }
     }
     
     //Method to View only one Booked Room
@@ -342,5 +354,30 @@ public class App
 			System.out.println("Message : " + e.getMessage());
 		}
     	return false;
+    }
+    
+    //Method to check if room no. is available
+    private static boolean roomAvailable(Connection con, int roomNo) {
+        String sql = "SELECT * FROM booking_table WHERE room_no = ?";  // Corrected column name
+
+        try {
+            PreparedStatement preparedStatement = con.prepareStatement(sql);
+            preparedStatement.setInt(1, roomNo);
+
+            ResultSet resultSet = preparedStatement.executeQuery();
+
+            if (resultSet.next()) {
+                // Room already booked
+                resultSet.close();
+                preparedStatement.close();
+                return true;
+            }
+
+            resultSet.close();
+            preparedStatement.close();
+        } catch (SQLException e) {
+            System.out.println("Error checking room availability: " + e.getMessage());
+        }
+        return false;
     }
 }
