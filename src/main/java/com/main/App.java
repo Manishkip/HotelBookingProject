@@ -151,7 +151,7 @@ public class App
             // Loop until a valid 10-digit phone number is entered
             while (phoneNo.length() != 10 || !phoneNo.chars().allMatch(Character::isDigit)) {
                 System.out.println("Invalid phone number. Please enter a 10-digit phone number: ");
-                phoneNo = scanner.nextLine();  // Accept input again
+                phoneNo = scanner.next();  // Accept input again
             }
 
 
